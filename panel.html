@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Panel — Cocina</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0e12;
+    --surface: #111620;
+    --card: #161c28;
+    --border: #1e2738;
+    --blue: #4a9eff;
+    --blue-dim: #1a3a5c;
+    --amber: #f0a030;
+    --amber-dim: #3d2a0a;
+    --green: #3dd68c;
+    --green-dim: #0d3320;
+    --red: #f05060;
+    --text: #e8edf5;
+    --text-muted: #5a6a82;
+    --radius: 10px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'IBM Plex Sans', sans-serif;
+    min-height: 100vh;
+  }
+
+  /* HEADER */
+  header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 16px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .header-left { display: flex; align-items: center; gap: 14px; }
+  .logo {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--blue);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+  .pulse-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--green);
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(0.8); }
+  }
+  .live-label { font-size: 0.72rem; color: var(--green); letter-spacing: 1px; }
+  .header-right { display: flex; align-items: center; gap: 20px; }
+  .stat-item { text-align: right; }
+  .stat-val {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--amber);
+  }
+  .stat-lbl { font-size: 0.7rem; color: var(--text-muted); letter-spacing: 0.5px; }
+  .clock {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 1rem;
+    color: var(--text-muted);
+  }
+
+  /* FILTROS */
+  .filters {
+    display: flex;
+    gap: 8px;
+    padding: 14px 24px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .filters::-webkit-scrollbar { display: none; }
+  .filter-btn {
+    flex-shrink: 0;
+    padding: 6px 16px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text-muted);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: all 0.15s;
+    letter-spacing: 0.5px;
+  }
+  .filter-btn.active { background: var(--blue-dim); border-color: var(--blue); color: var(--blue); }
+  .filter-btn:hover:not(.active) { border-color: var(--text-muted); color: var(--text); }
+
+  /* GRID */
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 14px;
+    padding: 20px 24px;
+  }
+
+  /* PEDIDO CARD */
+  .pedido-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    animation: cardIn 0.3s cubic-bezier(0.19,1,0.22,1);
+    transition: border-color 0.2s;
+  }
+  .pedido-card.nuevo { border-color: var(--blue); }
+  .pedido-card.en-prep { border-color: var(--amber); }
+  .pedido-card.listo { border-color: var(--green); }
+  @keyframes cardIn {
+    from { opacity: 1; }
+    to { opacity: 1; }
+  }
+
+  .card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+  }
+  .card-mesa {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 1rem;
+    font-weight: 600;
+  }
+  .card-num {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--text-muted);
+  }
+  .status-badge {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.65rem;
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+  .status-badge.nuevo { background: var(--blue-dim); color: var(--blue); }
+  .status-badge.en-prep { background: var(--amber-dim); color: var(--amber); }
+  .status-badge.listo { background: var(--green-dim); color: var(--green); }
+
+  .card-timer {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+  }
+  .card-timer.tarde { color: var(--red); animation: blink 1s infinite; }
+  @keyframes blink { 50% { opacity: 0.4; } }
+
+  .card-items { padding: 14px 16px; display: flex; flex-direction: column; gap: 8px; }
+  .item-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.87rem;
+  }
+  .item-check {
+    width: 18px; height: 18px;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    transition: all 0.15s;
+    background: transparent;
+  }
+  .item-check.done { background: var(--green-dim); border-color: var(--green); }
+  .item-check.done::after { content: '✓'; color: var(--green); font-size: 0.7rem; font-weight: 700; }
+  .item-qty {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--blue);
+    min-width: 22px;
+  }
+  .item-nombre { flex: 1; }
+  .item-nombre.done { text-decoration: line-through; color: var(--text-muted); }
+
+  .card-notas {
+    margin: 0 16px 12px;
+    padding: 8px 12px;
+    background: rgba(240,160,48,0.07);
+    border-left: 2px solid var(--amber);
+    border-radius: 4px;
+    font-size: 0.8rem;
+    color: var(--amber);
+    font-style: italic;
+  }
+
+  .card-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 16px;
+    border-top: 1px solid var(--border);
+    background: rgba(0,0,0,0.2);
+  }
+  .card-total {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+  }
+  .card-total span { color: var(--text); font-weight: 600; }
+  .card-actions { display: flex; gap: 8px; }
+  .action-btn {
+    padding: 6px 14px;
+    border-radius: 6px;
+    border: 1px solid;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.72rem;
+    cursor: pointer;
+    transition: all 0.15s;
+    letter-spacing: 0.5px;
+    font-weight: 600;
+  }
+  .btn-prep {
+    border-color: var(--amber);
+    color: var(--amber);
+    background: transparent;
+  }
+  .btn-prep:hover { background: var(--amber-dim); }
+  .btn-listo {
+    border-color: var(--green);
+    color: var(--green);
+    background: transparent;
+  }
+  .btn-listo:hover { background: var(--green-dim); }
+  .btn-entregar {
+    border-color: var(--text-muted);
+    color: var(--text-muted);
+    background: transparent;
+  }
+  .btn-entregar:hover { border-color: var(--text); color: var(--text); }
+
+  /* EMPTY */
+  .empty {
+    text-align: center;
+    padding: 80px 20px;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+  }
+  .empty .icon { font-size: 3rem; margin-bottom: 16px; opacity: 0.3; }
+
+  /* NOTIFICACION NUEVO PEDIDO */
+  .notif {
+    position: fixed;
+    top: 80px; right: 20px;
+    background: var(--blue);
+    color: #fff;
+    padding: 12px 20px;
+    border-radius: var(--radius);
+    font-size: 0.85rem;
+    font-weight: 600;
+    font-family: 'IBM Plex Mono', monospace;
+    box-shadow: 0 8px 32px rgba(74,158,255,0.4);
+    animation: notifIn 0.4s cubic-bezier(0.19,1,0.22,1);
+    z-index: 999;
+    display: none;
+  }
+  @keyframes notifIn {
+    from { transform: translateX(40px); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+  }
+
+  /* RESUMEN DÍA */
+  .resumen-bar {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    padding: 10px 24px;
+    display: flex;
+    gap: 32px;
+    align-items: center;
+  }
+  .resumen-item { display: flex; flex-direction: column; gap: 2px; }
+  .resumen-val {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text);
+  }
+  .resumen-lbl { font-size: 0.68rem; color: var(--text-muted); letter-spacing: 0.5px; }
+  .resumen-total .resumen-val { color: var(--green); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <div class="logo">🍽 Panel Cocina</div>
+    <div style="display:flex;align-items:center;gap:6px">
+      <div class="pulse-dot"></div>
+      <span class="live-label">EN VIVO</span>
+    </div>
+  </div>
+  <div class="header-right">
+    <div class="stat-item">
+      <div class="stat-val" id="pedidosHoy">0</div>
+      <div class="stat-lbl">PEDIDOS HOY</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-val" id="enCocina">0</div>
+      <div class="stat-lbl">EN COCINA</div>
+    </div>
+    <div class="clock" id="clock">00:00</div>
+  </div>
+</header>
+
+<div class="filters">
+  <button class="filter-btn active" onclick="filtrar('todos',this)">TODOS</button>
+  <button class="filter-btn" onclick="filtrar('nuevo',this)">🔵 NUEVOS</button>
+  <button class="filter-btn" onclick="filtrar('en-prep',this)">🟡 EN PREP.</button>
+  <button class="filter-btn" onclick="filtrar('listo',this)">🟢 LISTOS</button>
+  <button class="filter-btn" onclick="filtrar('entregado',this)">✅ ENTREGADOS</button>
+</div>
+
+<div class="grid" id="grid"></div>
+
+<div class="notif" id="notif">🔔 Nuevo pedido ingresado</div>
+
+<div class="resumen-bar">
+  <div class="resumen-item">
+    <div class="resumen-val" id="resNuevos">0</div>
+    <div class="resumen-lbl">NUEVOS</div>
+  </div>
+  <div class="resumen-item">
+    <div class="resumen-val" id="resPrep">0</div>
+    <div class="resumen-lbl">EN PREP.</div>
+  </div>
+  <div class="resumen-item">
+    <div class="resumen-val" id="resListos">0</div>
+    <div class="resumen-lbl">LISTOS</div>
+  </div>
+  <div class="resumen-item resumen-total" style="margin-left:auto">
+    <div class="resumen-val" id="resTotalDia">$0</div>
+    <div class="resumen-lbl">TOTAL DÍA</div>
+  </div>
+</div>
+
+<script>
+// ── CONFIG ──────────────────────────────────────────────────
+const N8N_PANEL_URL  = 'http://localhost:5678/webhook/pedidos-panel';
+const N8N_UPDATE_URL = 'http://localhost:5678/webhook/actualizar-estado';
+const POLL_INTERVAL  = 5000; // ms entre consultas
+
+// ── ESTADO ──────────────────────────────────────────────────
+let pedidos = [];       // todos los pedidos (incluyendo entregados)
+let checksDone = {};
+let filtroActual = 'todos';
+
+// ── DEMO: pedidos de ejemplo para mostrar en pantalla ────────
+const DEMO = [
+  {
+    id: 1001, mesa: '3', estado: 'nuevo', notas: 'Sin cebolla en la milanesa',
+    total: 7000, hora: '20:15', fecha: new Date().toLocaleDateString('es-AR'),
+    timestamp: new Date(Date.now() - 3*60000).toISOString(),
+    items: [
+      { nombre:'Milanesa napolitana', cantidad:1, precio:5200 },
+      { nombre:'Gaseosa', cantidad:2, precio:900 }
+    ]
+  },
+  {
+    id: 1002, mesa: '7', estado: 'en-prep', notas: '',
+    total: 12000, hora: '20:12', fecha: new Date().toLocaleDateString('es-AR'),
+    timestamp: new Date(Date.now() - 6*60000).toISOString(),
+    items: [
+      { nombre:'Bife de chorizo', cantidad:2, precio:6800 },
+      { nombre:'Provoleta', cantidad:1, precio:2400 }
+    ]
+  },
+  {
+    id: 1003, mesa: '1', estado: 'listo', notas: 'Punto del bife a punto',
+    total: 9200, hora: '20:08', fecha: new Date().toLocaleDateString('es-AR'),
+    timestamp: new Date(Date.now() - 10*60000).toISOString(),
+    items: [
+      { nombre:'Empanadas x4', cantidad:2, precio:1800 },
+      { nombre:'Bife de chorizo', cantidad:1, precio:6800 },
+      { nombre:'Vino de la casa', cantidad:1, precio:1400 }
+    ]
+  }
+];
+
+// ── TIEMPO TRANSCURRIDO ──────────────────────────────────────
+function minutosDesde(ts) {
+  return Math.floor((Date.now() - new Date(ts).getTime()) / 60000);
+}
+
+// ── RELOJ ────────────────────────────────────────────────────
+function actualizarReloj() {
+  const now = new Date();
+  document.getElementById('clock').textContent =
+    now.toLocaleTimeString('es-AR', { hour:'2-digit', minute:'2-digit' });
+}
+setInterval(actualizarReloj, 1000);
+actualizarReloj();
+
+// ── FETCH PEDIDOS DESDE N8N ──────────────────────────────────
+async function fetchPedidos() {
+  try {
+    const res = await fetch(N8N_PANEL_URL);
+    const data = await res.json();
+    const lista = Array.isArray(data) ? data : (data.pedidos || []);
+
+    // Conservar entregados locales que n8n puede no devolver
+    const entregadosLocales = pedidos.filter(p => p.estado === 'entregado');
+    const idsNuevos = new Set(lista.map(p => String(p.id)));
+    const entregadosFaltantes = entregadosLocales.filter(p => !idsNuevos.has(String(p.id)));
+    const listaCompleta = [...lista, ...entregadosFaltantes];
+
+    // Respetar estados locales más avanzados (evita que Sheets pise cambios recientes)
+    const ordenEstados = {'nuevo': 0, 'en-prep': 1, 'listo': 2, 'entregado': 3};
+    const listaMergeada = listaCompleta.map(p => {
+      const local = pedidos.find(x => String(x.id) === String(p.id));
+      if (local && (ordenEstados[local.estado] || 0) > (ordenEstados[p.estado] || 0)) {
+        return { ...p, estado: local.estado }; // mantener estado local más avanzado
+      }
+      return p;
+    });
+
+    const nuevaStr = JSON.stringify(listaMergeada);
+    const anteriorStr = JSON.stringify(pedidos);
+    if (nuevaStr !== anteriorStr) {
+      const prev = pedidos.filter(p => p.estado !== 'entregado').length;
+      const nuevo = listaMergeada.filter(p => p.estado !== 'entregado').length;
+      pedidos = listaMergeada;
+      // Persistir entregados en localStorage
+      try {
+        const entregados = pedidos.filter(p => p.estado === 'entregado');
+        localStorage.setItem('entregados', JSON.stringify(entregados));
+      } catch {}
+      if (nuevo > prev) mostrarNotif();
+      render();
+    }
+  } catch {
+    if (pedidos.length === 0) {
+      pedidos = DEMO;
+      render();
+    }
+  }
+}
+
+// ── ACTUALIZAR ESTADO EN N8N ─────────────────────────────────
+async function actualizarEstado(id, nuevoEstado) {
+  // Actualizar local sin re-render completo
+  const p = pedidos.find(x => x.id == id);
+  if (!p) return;
+  p.estado = nuevoEstado;
+
+  // Solo actualizar la tarjeta afectada en el DOM
+  const cards = document.querySelectorAll('.pedido-card');
+  cards.forEach(card => {
+    const btn = card.querySelector('.action-btn');
+    if (btn && btn.getAttribute('onclick') && btn.getAttribute('onclick').includes(`'${id}'`)) {
+      // Re-renderizar solo esta tarjeta
+      card.outerHTML = renderCard(p);
+    }
+  });
+
+  // Guardar entregados en localStorage para sobrevivir F5
+  try {
+    const entregados = pedidos.filter(p => p.estado === 'entregado');
+    localStorage.setItem('entregados', JSON.stringify(entregados));
+  } catch {}
+
+  // Re-renderizar siempre que cambia estado (sin animación)
+  render();
+
+  // Enviar a n8n en background
+  try {
+    await fetch(N8N_UPDATE_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, estado: nuevoEstado })
+    });
+  } catch {}
+}
+
+// ── RENDER ───────────────────────────────────────────────────
+function filtrar(estado, btn) {
+  filtroActual = estado;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  render();
+}
+
+function render() {
+  const lista = filtroActual === 'todos'
+    ? pedidos.filter(p => p.estado !== 'entregado')
+    : pedidos.filter(p => p.estado === filtroActual);
+
+  const grid = document.getElementById('grid');
+
+  if (lista.length === 0) {
+    grid.innerHTML = `<div class="empty" style="grid-column:1/-1">
+      <div class="icon">🍽️</div>
+      No hay pedidos ${filtroActual === 'todos' ? 'activos' : 'en este estado'}
+    </div>`;
+  } else {
+    grid.innerHTML = lista.map(p => renderCard(p)).join('');
+  }
+
+  actualizarResumen();
+}
+
+function renderCard(p) {
+  const mins = minutosDesde(p.timestamp);
+  const tarde = mins > 20;
+  const checks = checksDone[p.id] || new Set();
+
+  // Items pueden venir como array o string JSON (desde Sheets)
+  let itemsList = [];
+  try {
+    if (Array.isArray(p.items)) itemsList = p.items;
+    else if (Array.isArray(p.itemsArray)) itemsList = p.itemsArray;
+    else if (typeof p.itemsArray === 'string') itemsList = JSON.parse(p.itemsArray);
+    else if (typeof p.items === 'string' && p.items.startsWith('[')) itemsList = JSON.parse(p.items);
+  } catch { itemsList = []; }
+
+  const itemsHTML = itemsList.length > 0 ? itemsList.map((it, i) => {
+    const done = checks.has(i);
+    return `
+      <div class="item-row">
+        <div class="item-check${done?' done':''}" onclick="toggleCheck('${p.id}',${i})"></div>
+        <span class="item-qty">x${it.cantidad}</span>
+        <span class="item-nombre${done?' done':''}">${it.nombre}</span>
+      </div>`;
+  }).join('') : '<div class="item-row" style="color:var(--text-muted)">Sin detalle</div>';
+
+  const notasHTML = p.notas ? `<div class="card-notas">📝 ${p.notas}</div>` : '';
+
+  let acciones = '';
+  if (p.estado === 'nuevo') acciones = `<button class="action-btn btn-prep" onclick="actualizarEstado('${p.id}','en-prep')">EN PREP.</button>`;
+  if (p.estado === 'en-prep') acciones = `<button class="action-btn btn-listo" onclick="actualizarEstado('${p.id}','listo')">LISTO ✓</button>`;
+  if (p.estado === 'listo') acciones = `<button class="action-btn btn-entregar" onclick="actualizarEstado('${p.id}','entregado')">ENTREGAR</button>`;
+
+  return `
+    <div class="pedido-card ${p.estado}">
+      <div class="card-header">
+        <div>
+          <div class="card-mesa">Mesa ${p.mesa}</div>
+          <div class="card-num">#${p.id} · ${p.hora}</div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
+          <span class="status-badge ${p.estado}">${estadoLabel(p.estado)}</span>
+          <span class="card-timer${tarde?' tarde':''}">⏱ ${mins}min${tarde?' ⚠':''}  </span>
+        </div>
+      </div>
+      <div class="card-items">${itemsHTML}</div>
+      ${notasHTML}
+      <div class="card-footer">
+        <div class="card-total">Total: <span>$${Number(p.total).toLocaleString('es-AR')}</span></div>
+        <div class="card-actions">${acciones}</div>
+      </div>
+    </div>`;
+}
+
+function estadoLabel(e) {
+  return { 'nuevo':'NUEVO', 'en-prep':'EN PREP.', 'listo':'LISTO', 'entregado':'ENTREGADO' }[e] || e;
+}
+
+function toggleCheck(pedidoId, itemIdx) {
+  if (!checksDone[pedidoId]) checksDone[pedidoId] = new Set();
+  if (checksDone[pedidoId].has(itemIdx)) checksDone[pedidoId].delete(itemIdx);
+  else checksDone[pedidoId].add(itemIdx);
+  render();
+}
+
+function actualizarResumen() {
+  const nuevo = pedidos.filter(p => p.estado==='nuevo').length;
+  const prep  = pedidos.filter(p => p.estado==='en-prep').length;
+  const listo = pedidos.filter(p => p.estado==='listo').length;
+  // Total y cantidad incluyen TODOS (incluso entregados)
+  const total = pedidos.reduce((s,p) => s + Number(p.total||0), 0);
+
+  document.getElementById('pedidosHoy').textContent = pedidos.length;
+  document.getElementById('enCocina').textContent = nuevo + prep;
+  document.getElementById('resNuevos').textContent = nuevo;
+  document.getElementById('resPrep').textContent = prep;
+  document.getElementById('resListos').textContent = listo;
+  document.getElementById('resTotalDia').textContent = `$${total.toLocaleString('es-AR')}`;
+}
+
+function mostrarNotif() {
+  const notif = document.getElementById('notif');
+  notif.style.display = 'block';
+  setTimeout(() => notif.style.display = 'none', 3500);
+}
+
+// ── TIMER: re-render cada minuto para actualizar los tiempos ─
+setInterval(() => { if (pedidos.length) render(); }, 60000);
+
+// ── INIT ─────────────────────────────────────────────────────
+// Recuperar entregados guardados localmente
+try {
+  const guardados = localStorage.getItem('entregados');
+  if (guardados) pedidos = JSON.parse(guardados);
+} catch {}
+fetchPedidos();
+setInterval(fetchPedidos, POLL_INTERVAL);
+</script>
+</body>
+</html>
